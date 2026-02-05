@@ -2,7 +2,7 @@
 Configuration file for fine-tuning Phi-3-mini to create Aurora model
 """
 
-# Model Configuration
+# Model Configuration(Default)
 BASE_MODEL_NAME = "unsloth/Phi-3-mini-4k-instruct"
 OUTPUT_MODEL_NAME = "aurora"
 MAX_SEQ_LENGTH = 2048
