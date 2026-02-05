@@ -106,19 +106,28 @@ def create_training_examples(books: List[Dict]) -> List[Dict]:
     
     return training_examples
 
-def format_for_training(example: Dict) -> Dict:
+def format_for_training(example: Dict, tokenizer=None) -> Dict:
     """
     Format examples for training with proper chat template.
     
     Args:
         example: Training example with messages
+        tokenizer: Optional tokenizer to use for applying chat template
         
     Returns:
         Formatted example with text field
     """
     messages = example['messages']
     
-    # Format as chat
+    if tokenizer:
+        # Use the tokenizer's chat template if available
+        try:
+            return {"text": tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)}
+        except Exception:
+            # Fallback if template application fails
+            pass
+            
+    # Fallback for Phi-3 format if no tokenizer provided or if application fails
     formatted_text = ""
     for message in messages:
         role = message['role']
@@ -133,10 +142,13 @@ def format_for_training(example: Dict) -> Dict:
     
     return {"text": formatted_text}
 
-def prepare_dataset():
+def prepare_dataset(tokenizer=None):
     """
     Main function to prepare the complete dataset.
     
+    Args:
+        tokenizer: Optional tokenizer to use for formatting
+        
     Returns:
         Train and validation datasets
     """
@@ -162,7 +174,7 @@ def prepare_dataset():
     
     # Format for training
     print("\n3. Formatting examples for training...")
-    formatted_examples = [format_for_training(ex) for ex in training_examples]
+    formatted_examples = [format_for_training(ex, tokenizer) for ex in training_examples]
     
     # Create dataset
     dataset = Dataset.from_list(formatted_examples)
