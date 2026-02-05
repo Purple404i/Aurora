@@ -126,7 +126,7 @@ def format_for_training(example: Dict, tokenizer=None) -> Dict:
         except Exception:
             # Fallback if template application fails
             pass
-
+            
     # Fallback for Phi-3 format if no tokenizer provided or if application fails
     formatted_text = ""
     for message in messages:
@@ -148,7 +148,7 @@ def prepare_dataset(tokenizer=None):
     
     Args:
         tokenizer: Optional tokenizer to use for formatting
-
+        
     Returns:
         Train and validation datasets
     """
