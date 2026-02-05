@@ -9,7 +9,7 @@ import importlib
 from unsloth import FastLanguageModel
 from trl import SFTTrainer
 from transformers import TrainingArguments, DataCollatorForLanguageModeling
-from data_preparation import prepare_dataset
+import data_preparation
 from config import *
 import logging
 from datetime import datetime
@@ -83,49 +83,59 @@ def map_ollama_to_unsloth(ollama_model):
 
     return None
 
-def update_config_file(new_model_name):
+def update_config_file(updates: dict):
     """
-    Update the BASE_MODEL_NAME in config.py.
+    Update configuration variables in config.py.
     """
     config_path = 'config.py'
     with open(config_path, 'r') as f:
         lines = f.readlines()
 
-    updated = False
+    updated_count = 0
     with open(config_path, 'w') as f:
         for line in lines:
-            # Only match top-level assignments to avoid replacing strings inside SYSTEM_PROMPT
-            if line.startswith('BASE_MODEL_NAME ='):
-                f.write(f'BASE_MODEL_NAME = "{new_model_name}"\n')
-                updated = True
-            else:
+            handled = False
+            for key, value in updates.items():
+                # Only match top-level assignments to avoid replacing strings inside multi-line variables
+                if line.startswith(f'{key} ='):
+                    if isinstance(value, str):
+                        f.write(f'{key} = "{value}"\n')
+                    else:
+                        f.write(f'{key} = {value}\n')
+                    updated_count += 1
+                    handled = True
+                    break
+            if not handled:
                 f.write(line)
-    return updated
+    return updated_count > 0
 
-def load_model():
+def detect_target_modules(model):
     """
-    Load the base model with LoRA configuration.
-    
-    Returns:
-        model: The prepared model for fine-tuning
-        tokenizer: The tokenizer
+    Detect the appropriate linear layers for LoRA fine-tuning based on model architecture.
     """
-    logger.info("="*60)
-    logger.info("LOADING BASE MODEL")
-    logger.info("="*60)
-    logger.info(f"Base model: {BASE_MODEL_NAME}")
-    logger.info(f"Max sequence length: {MAX_SEQ_LENGTH}")
-    logger.info(f"Using 4-bit quantization: {USE_4BIT}")
+    logger.info("Detecting target modules for model architecture...")
     
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=BASE_MODEL_NAME,
-        max_seq_length=MAX_SEQ_LENGTH,
-        dtype=None,  # Auto-detect
-        load_in_4bit=USE_4BIT,
-    )
+    # Common projection layers to target
+    target_candidates = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "qkv_proj", "dense"]
+
+    detected_modules = set()
+    for name, module in model.named_modules():
+        if "Linear" in str(type(module)):
+            parts = name.split(".")
+            if parts:
+                leaf = parts[-1]
+                if leaf in target_candidates:
+                    detected_modules.add(leaf)
     
-    logger.info("Base model loaded successfully!")
-    
+    # Sort for consistency
+    result = sorted(list(detected_modules))
+    logger.info(f"Detected target modules: {result}")
+    return result
+
+def apply_lora(model):
+    """
+    Apply LoRA configuration to the model.
+    """
     logger.info("\n" + "="*60)
     logger.info("APPLYING LoRA CONFIGURATION")
     logger.info("="*60)
@@ -152,11 +162,40 @@ def load_model():
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f"\nTrainable parameters: {trainable_params:,}")
     logger.info(f"Total parameters: {total_params:,}")
-    logger.info(f"Percentage trainable: {100 * trainable_params / total_params:.2f}%")
+    if total_params > 0:
+        logger.info(f"Percentage trainable: {100 * trainable_params / total_params:.2f}%")
+
+    return model
+
+def load_model():
+    """
+    Load the base model and apply LoRA configuration.
+
+    Returns:
+        model: The prepared model for fine-tuning
+        tokenizer: The tokenizer
+    """
+    logger.info("="*60)
+    logger.info("LOADING BASE MODEL")
+    logger.info("="*60)
+    logger.info(f"Base model: {BASE_MODEL_NAME}")
+    logger.info(f"Max sequence length: {MAX_SEQ_LENGTH}")
+    logger.info(f"Using 4-bit quantization: {USE_4BIT}")
+
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=BASE_MODEL_NAME,
+        max_seq_length=MAX_SEQ_LENGTH,
+        dtype=None,  # Auto-detect
+        load_in_4bit=USE_4BIT,
+    )
+
+    logger.info("Base model loaded successfully!")
+
+    model = apply_lora(model)
     
     return model, tokenizer
 
-def train_aurora():
+def train_aurora(model=None, tokenizer=None):
     """
     Main training function.
     """
@@ -169,14 +208,18 @@ def train_aurora():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
     
-    # Load model
-    model, tokenizer = load_model()
+    # Load model if not provided
+    if model is None or tokenizer is None:
+        model, tokenizer = load_model()
+    else:
+        # Apply LoRA if base model was provided
+        model = apply_lora(model)
     
     # Prepare dataset
     logger.info("\n" + "="*60)
     logger.info("PREPARING DATASET")
     logger.info("="*60)
-    train_dataset, val_dataset = prepare_dataset(tokenizer)
+    train_dataset, val_dataset = data_preparation.prepare_dataset(tokenizer)
     
     # Training arguments
     logger.info("\n" + "="*60)
@@ -275,12 +318,15 @@ if __name__ == "__main__":
         # 1. Check for Ollama models
         ollama_models = get_ollama_models()
 
+        selected_model_obj = None
+        selected_tokenizer_obj = None
+
         if ollama_models:
             print("\n" + "="*60)
             print("LOCAL OLLAMA MODELS FOUND")
             print("="*60)
-            for i, model in enumerate(ollama_models, 1):
-                print(f"{i}. {model}")
+            for i, model_name in enumerate(ollama_models, 1):
+                print(f"{i}. {model_name}")
             print(f"{len(ollama_models) + 1}. Keep current ({BASE_MODEL_NAME})")
 
             choice = input(f"\nSelect a model to finetune (1-{len(ollama_models) + 1}): ")
@@ -300,11 +346,40 @@ if __name__ == "__main__":
                         if not unsloth_model:
                             unsloth_model = selected_ollama_model
 
-                    # 3. Update config.py
-                    if update_config_file(unsloth_model):
-                        logger.info(f"Updated config.py with BASE_MODEL_NAME = \"{unsloth_model}\"")
+                    # 3. Prompt for Max Sequence Length
+                    max_seq_input = input(f"Enter Max Sequence Length (default {MAX_SEQ_LENGTH}): ").strip()
+                    if max_seq_input:
+                        try:
+                            max_seq_length = int(max_seq_input)
+                        except ValueError:
+                            logger.warning(f"Invalid input for sequence length, using default {MAX_SEQ_LENGTH}")
+                            max_seq_length = MAX_SEQ_LENGTH
+                    else:
+                        max_seq_length = MAX_SEQ_LENGTH
 
-                        # 4. Reload configuration
+                    # 4. Load model temporarily to detect architecture
+                    logger.info(f"Loading {unsloth_model} to confirm architecture...")
+                    selected_model_obj, selected_tokenizer_obj = FastLanguageModel.from_pretrained(
+                        model_name=unsloth_model,
+                        max_seq_length=max_seq_length,
+                        dtype=None,
+                        load_in_4bit=USE_4BIT,
+                    )
+
+                    # Detect target modules
+                    detected_modules = detect_target_modules(selected_model_obj)
+
+                    # 5. Update config.py
+                    config_updates = {
+                        "BASE_MODEL_NAME": unsloth_model,
+                        "MAX_SEQ_LENGTH": max_seq_length,
+                        "TARGET_MODULES": detected_modules
+                    }
+
+                    if update_config_file(config_updates):
+                        logger.info("Updated config.py with new model parameters")
+
+                        # 6. Reload configuration
                         import config
                         importlib.reload(config)
                         import data_preparation
@@ -312,9 +387,6 @@ if __name__ == "__main__":
 
                         # Update globals in this module
                         globals().update({k: v for k, v in vars(config).items() if not k.startswith('_')})
-
-                        # Specifically re-import prepare_dataset as it might be using old config values
-                        from data_preparation import prepare_dataset
 
                         logger.info("Configuration reloaded successfully")
                 else:
@@ -325,7 +397,7 @@ if __name__ == "__main__":
             logger.info("No Ollama models found or Ollama not running, using default configuration")
 
         # Start training
-        train_aurora()
+        train_aurora(model=selected_model_obj, tokenizer=selected_tokenizer_obj)
     except Exception as e:
         logger.error(f"Training failed with error: {str(e)}", exc_info=True)
         raise

@@ -63,7 +63,7 @@ TRAIN_TEST_SPLIT = 0.9  # 90% train, 10% validation
 LORA_R = 16
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
-TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+TARGET_MODULES = ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj']
 
 # Training Configuration
 BATCH_SIZE = 2
