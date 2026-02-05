@@ -4,6 +4,8 @@ Main training script for fine-tuning Phi-3-mini to create Aurora
 
 import os
 import torch
+import subprocess
+import importlib
 from unsloth import FastLanguageModel
 from trl import SFTTrainer
 from transformers import TrainingArguments, DataCollatorForLanguageModeling
@@ -26,6 +28,78 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+def get_ollama_models():
+    """
+    Get the list of locally downloaded Ollama models.
+    """
+    try:
+        result = subprocess.run(['ollama', 'list'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return []
+
+        lines = result.stdout.strip().split('\n')
+        if len(lines) <= 1: # Header only or empty
+            return []
+
+        models = []
+        for line in lines[1:]:
+            parts = line.split()
+            if parts:
+                models.append(parts[0])
+        return models
+    except Exception:
+        return []
+
+def map_ollama_to_unsloth(ollama_model):
+    """
+    Map Ollama model names to Unsloth-compatible Hugging Face model names.
+    """
+    ollama_model_lower = ollama_model.lower()
+
+    # Common mappings
+    mapping = {
+        "phi3": "unsloth/Phi-3-mini-4k-instruct",
+        "phi3:mini": "unsloth/Phi-3-mini-4k-instruct",
+        "phi3:medium": "unsloth/Phi-3-medium-4k-instruct",
+        "llama3": "unsloth/llama-3-8b-bnb-4bit",
+        "llama3:8b": "unsloth/llama-3-8b-bnb-4bit",
+        "llama3:70b": "unsloth/llama-3-70b-bnb-4bit",
+        "mistral": "unsloth/mistral-7b-v0.3-bnb-4bit",
+        "gemma": "unsloth/gemma-7b-bnb-4bit",
+        "gemma:7b": "unsloth/gemma-7b-bnb-4bit",
+        "gemma:2b": "unsloth/gemma-2b-bnb-4bit",
+        "llama2": "unsloth/llama-2-7b-bnb-4bit",
+    }
+
+    # Check for direct match
+    if ollama_model_lower in mapping:
+        return mapping[ollama_model_lower]
+
+    # Check for base name match (e.g., llama3:latest -> llama3)
+    base_name = ollama_model_lower.split(':')[0]
+    if base_name in mapping:
+        return mapping[base_name]
+
+    return None
+
+def update_config_file(new_model_name):
+    """
+    Update the BASE_MODEL_NAME in config.py.
+    """
+    config_path = 'config.py'
+    with open(config_path, 'r') as f:
+        lines = f.readlines()
+
+    updated = False
+    with open(config_path, 'w') as f:
+        for line in lines:
+            if line.strip().startswith('BASE_MODEL_NAME ='):
+                f.write(f'BASE_MODEL_NAME = "{new_model_name}"\n')
+                updated = True
+            else:
+                f.write(line)
+    return updated
 
 def load_model():
     """
@@ -197,6 +271,59 @@ def train_aurora():
 
 if __name__ == "__main__":
     try:
+        # 1. Check for Ollama models
+        ollama_models = get_ollama_models()
+
+        if ollama_models:
+            print("\n" + "="*60)
+            print("LOCAL OLLAMA MODELS FOUND")
+            print("="*60)
+            for i, model in enumerate(ollama_models, 1):
+                print(f"{i}. {model}")
+            print(f"{len(ollama_models) + 1}. Keep current ({BASE_MODEL_NAME})")
+
+            choice = input(f"\nSelect a model to finetune (1-{len(ollama_models) + 1}): ")
+
+            try:
+                choice_idx = int(choice) - 1
+                if 0 <= choice_idx < len(ollama_models):
+                    selected_ollama_model = ollama_models[choice_idx]
+                    logger.info(f"Selected Ollama model: {selected_ollama_model}")
+
+                    # 2. Map to Unsloth/HF model
+                    unsloth_model = map_ollama_to_unsloth(selected_ollama_model)
+
+                    if not unsloth_model:
+                        print(f"\nWarning: No direct Unsloth mapping found for '{selected_ollama_model}'")
+                        unsloth_model = input(f"Please enter the Hugging Face model name to use (or press Enter to use '{selected_ollama_model}' as is): ").strip()
+                        if not unsloth_model:
+                            unsloth_model = selected_ollama_model
+
+                    # 3. Update config.py
+                    if update_config_file(unsloth_model):
+                        logger.info(f"Updated config.py with BASE_MODEL_NAME = \"{unsloth_model}\"")
+
+                        # 4. Reload configuration
+                        import config
+                        importlib.reload(config)
+                        import data_preparation
+                        importlib.reload(data_preparation)
+
+                        # Update globals in this module
+                        globals().update({k: v for k, v in vars(config).items() if not k.startswith('_')})
+
+                        # Specifically re-import prepare_dataset as it might be using old config values
+                        from data_preparation import prepare_dataset
+
+                        logger.info("Configuration reloaded successfully")
+                else:
+                    logger.info("Keeping current model configuration")
+            except ValueError:
+                logger.info("Invalid choice, keeping current model configuration")
+        else:
+            logger.info("No Ollama models found or Ollama not running, using default configuration")
+
+        # Start training
         train_aurora()
     except Exception as e:
         logger.error(f"Training failed with error: {str(e)}", exc_info=True)
