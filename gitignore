@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+sample_data.txt
+my_data.txt
+# Virtual Environment
+venv/
+dw_env/
+env/
+ENV/
+
+# Training Outputs
+aurora_output/
+aurora_output_merged/
+aurora_checkpoints/
+aurora_gguf/
+logs/
+data_samples/
+
+# llama.cpp
+llama.cpp/
+
+# Model files
+*.gguf
+*.bin
+*.safetensors
+*.pth
+
+# Modelfile
+Modelfile
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+```
+
+---
+
+## Complete Directory Structure
+```
+aurora/
+│
+├── books/                          # [USER CREATES] Your .txt training files go here
+│   ├── book1.txt
+│   ├── book2.txt
+│   └── book3.txt
+│
+├── config.py                       # Configuration for training
+├── data_preparation.py             # Data loading and processing
+├── train.py                        # Main training script
+├── convert_to_gguf.py             # Convert model to GGUF
+├── import_to_ollama.py            # Import to Ollama
+├── test_aurora.py                 # Test the trained model
+├── requirements.txt               # Python dependencies
+├── README.md                      # Complete documentation
+├── .gitignore                     # Git ignore file
+│
+├── aurora_output/                 # [AUTO-CREATED] Fine-tuned model
+├── aurora_output_merged/          # [AUTO-CREATED] Merged model  
+├── aurora_checkpoints/            # [AUTO-CREATED] Training checkpoints
+├── aurora_gguf/                   # [AUTO-CREATED] GGUF format
+├── logs/                          # [AUTO-CREATED] Training logs
+├── data_samples/                  # [AUTO-CREATED] Sample data
+└── llama.cpp/                     # [AUTO-CREATED] Conversion tool
