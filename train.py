@@ -1,5 +1,5 @@
 """
-Main training script for fine-tuning Phi-3-mini to create Aurora
+Main training script for fine-tuning ollama hugging face models using unsloth to create Aurora
 """
 
 import os
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
                     if not unsloth_model:
                         print(f"\nWarning: No direct Unsloth mapping found for '{selected_ollama_model}'")
-                        unsloth_model = input(f"Please enter the Hugging Face model name to use (or press Enter to use '{selected_ollama_model}' as is): ").strip()
+                        unsloth_model = input(f"Please enter the Hugging Face model name to use (or edit the mappings in the train.py or press Enter to use '{selected_ollama_model}' as is): ").strip()
                         if not unsloth_model:
                             unsloth_model = selected_ollama_model
 
@@ -384,10 +384,13 @@ if __name__ == "__main__":
                         importlib.reload(config)
                         import data_preparation
                         importlib.reload(data_preparation)
-
+                        
                         # Update globals in this module
                         globals().update({k: v for k, v in vars(config).items() if not k.startswith('_')})
-
+                        
+                        # Specifically re-import prepare_dataset as it might be using old config values
+                        from data_preparation import prepare_dataset
+                        
                         logger.info("Configuration reloaded successfully")
                 else:
                     logger.info("Keeping current model configuration")
