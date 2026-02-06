@@ -32,11 +32,11 @@ books/
 python train.py
 ```
 
-This will:
-- Load Phi-3-mini base model
-- Prepare your book data
-- Fine-tune with LoRA
-- Save the Aurora model
+This will initiate an interactive process where you can:
+- **Select a Model**: Choose from models already downloaded locally via Ollama.
+- **Configure Context**: Specify the maximum sequence length (e.g., 2048, 4096) for training.
+- **Automatic Optimization**: The script automatically detects the model's architecture and selects the correct target modules for LoRA fine-tuning.
+- **Dynamic Formatting**: Training data is automatically formatted using the selected model's native chat template.
 
 Training time: 2-6 hours (depending on data size and GPU)
 
@@ -66,11 +66,11 @@ ollama run aurora
 
 ## Configuration
 
-Edit `config.py` to customize:
-- Training parameters (epochs, batch size, learning rate)
-- LoRA configuration (r, alpha, dropout)
-- Model name and system prompt
-- Data paths
+While `train.py` handles model selection and architecture detection automatically, you can still edit `config.py` to customize:
+- **Training Hyperparameters**: epochs, batch size, learning rate, etc.
+- **LoRA Settings**: rank (r), alpha, and dropout.
+- **System Prompt**: The core identity and instructions for Aurora (preserved even when switching base models).
+- **Data Paths**: The folder containing your training books.
 
 ## Project Structure
 ```
