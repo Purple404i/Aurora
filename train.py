@@ -70,7 +70,9 @@ def map_ollama_to_unsloth(ollama_model):
         "gemma:7b": "unsloth/gemma-7b-bnb-4bit",
         "gemma:2b": "unsloth/gemma-2b-bnb-4bit",
         "llama2": "unsloth/llama-2-7b-bnb-4bit",
-    }
+    } 
+    # More models at https://huggingface.co/unsloth
+
     
     # Check for direct match
     if ollama_model_lower in mapping:
@@ -80,7 +82,10 @@ def map_ollama_to_unsloth(ollama_model):
     base_name = ollama_model_lower.split(':')[0]
     if base_name in mapping:
         return mapping[base_name]
-        
+    else:
+        print(f"\nWarning: No mapping found for '{ollama_model}'. Please make sure its a Hugging Face model name and provided by unsloth.")
+        print(f"You can get available models' name https://huggingface.co/unsloth")
+        print("If model is present in both the places add the required model's name from https://huggingface.co/unsloth and then add it to the mappings in the train.py")
     return None
 
 def update_config_file(new_model_name):
