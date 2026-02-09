@@ -117,8 +117,8 @@ def map_ollama_to_unsloth(ollama_model):
         "llama2": "unsloth/llama-2-7b-bnb-4bit",
         "deepseek":"deepseek-ai/deepseek-coder-33b-instruct",
         "kimi": "moonshot-ai/kimi-1.5-chat",
-        "bitnet": "microsoft/bitnet-b1.58-2B-4T",
-        "bitnet:2b": "microsoft/bitnet-b1.58-2B-4T",
+        "bitnet": "microsoft/BitNet-b1.58-2B-4T",
+        "bitnet:2b": "microsoft/BitNet-b1.58-2B-4T",
         "bitnet:3b": "1bitLLM/bitnet_b1_58-3B",
         "bitnet:large": "1bitLLM/bitnet_b1_58-large",
         "llama3-1bit": "HF1BitLLM/Llama3-8B-1.58-100B-tokens",
@@ -126,7 +126,10 @@ def map_ollama_to_unsloth(ollama_model):
         "falcon3-1bit:1b": "tiiuae/Falcon3-1B-Instruct-1.58bit",
         "falcon3-1bit:3b": "tiiuae/Falcon3-3B-Instruct-1.58bit",
         "falcon3-1bit:7b": "tiiuae/Falcon3-7B-Instruct-1.58bit",
-        "falcon3-1bit:10b": "tiiuae/Falcon3-10B-Instruct-1.58bit"
+        "falcon3-1bit:10b": "tiiuae/Falcon3-10B-Instruct-1.58bit",
+        "phi-3.5": "unsloth/Phi-3.5-mini-instruct",
+        "llama3.1": "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
+        "llama3.2": "unsloth/Llama-3.2-3B-bnb-4bit"
     } 
     # More models at https://huggingface.co/unsloth
 
@@ -262,11 +265,14 @@ def load_model(is_bitnet=False):
         logger.info("Note: BitNet models use 1.58-bit ternary weights (-1, 0, +1)")
         logger.info("Fine-tuning will use LoRA adapters on top of 1-bit weights")
 
+    # BitNet models should not be loaded in 4bit as they are already 1.58-bit
+    load_in_4bit = USE_4BIT if not is_bitnet else False
+
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=BASE_MODEL_NAME,
         max_seq_length=MAX_SEQ_LENGTH,
         dtype=None,  # Auto-detect
-        load_in_4bit=USE_4BIT,
+        load_in_4bit=load_in_4bit,
     )
 
     logger.info("Base model loaded successfully!")

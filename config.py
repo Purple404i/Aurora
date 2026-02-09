@@ -9,7 +9,7 @@ MAX_SEQ_LENGTH = 8192
 
 # BitNet Model Support
 BITNET_AVAILABLE_MODELS = {
-    'bitnet-2b': 'microsoft/bitnet-b1.58-2B-4T',
+    'bitnet-2b': 'microsoft/BitNet-b1.58-2B-4T',
     'bitnet-3b': '1bitLLM/bitnet_b1_58-3B',
     'bitnet-large': '1bitLLM/bitnet_b1_58-large',
     'llama3-1bit': 'HF1BitLLM/Llama3-8B-1.58-100B-tokens',
@@ -29,6 +29,18 @@ BITNET_CONFIG = {
     'gradient_accumulation_steps': 2,
     'learning_rate': 5e-5,
     'num_epochs': 5,
+}
+
+# BitNet-specific directories and inference settings
+BITNET_CPP_DIR = "bitnet.cpp"
+BITNET_MODELS_DIR = "bitnet_models"
+BITNET_QUANT_TYPE = "i2_s"
+BITNET_USE_PRETUNED = False
+BITNET_THREADS = None
+BITNET_CTX_SIZE = 2048
+BITNET_INFERENCE_SETTINGS = {
+    'n_predict': 512,
+    'temperature': 0.7,
 }
 
 # Data Configuration
