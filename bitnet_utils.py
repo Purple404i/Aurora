@@ -38,10 +38,15 @@ class BitNetManager:
             cpp_dir: Directory for bitnet.cpp repository
             models_dir: Directory for BitNet models
         """
-        self.cpp_dir = cpp_dir
-        self.models_dir = models_dir
+        self.cpp_dir = os.path.abspath(cpp_dir)
+        self.models_dir = os.path.abspath(models_dir)
         os.makedirs(self.models_dir, exist_ok=True)
     
+    def check_binaries(self) -> bool:
+        """Check if bitnet.cpp binaries are built."""
+        binary_path = os.path.join(self.cpp_dir, "build", "bin", "llama-cli")
+        return os.path.exists(binary_path)
+
     def setup_bitnet_cpp(self) -> bool:
         """
         Clone and build bitnet.cpp if not already set up.
@@ -66,6 +71,13 @@ class BitNetManager:
             # Check for required dependencies
             self._check_dependencies()
             
+            if self.check_binaries():
+                logger.info("✓ bitnet.cpp is already built")
+            else:
+                logger.info("! bitnet.cpp is cloned but binaries are not built yet.")
+                logger.info("  Binaries will be built automatically during the first model setup.")
+                logger.info("  If Clang fails, try building manually with: CC=gcc CXX=g++ cmake .. && make")
+
             logger.info("✓ bitnet.cpp setup complete")
             return True
             
@@ -124,9 +136,14 @@ class BitNetManager:
             
             model_dir = os.path.join(self.models_dir, model_name)
             
-            # Use huggingface-cli to download
+            # Use huggingface-cli or hf to download
+            import shutil
+            hf_cli = "huggingface-cli"
+            if not shutil.which(hf_cli) and shutil.which("hf"):
+                hf_cli = "hf"
+
             subprocess.run([
-                "huggingface-cli", "download",
+                hf_cli, "download",
                 hf_repo,
                 "--local-dir", model_dir
             ], check=True)
@@ -172,6 +189,9 @@ class BitNetManager:
             # Run setup_env.py from bitnet.cpp
             setup_script = os.path.join(self.cpp_dir, "setup_env.py")
             
+            # Check if we already have the binary to avoid rebuilding
+            binary_path = os.path.join(self.cpp_dir, "build", "bin", "llama-cli")
+
             cmd = [
                 "python", setup_script,
                 "-md", model_dir,
@@ -182,7 +202,11 @@ class BitNetManager:
                 cmd.append("--use-pretuned")
             
             logger.info(f"Running: {' '.join(cmd)}")
-            subprocess.run(cmd, check=True, cwd=self.cpp_dir)
+            # Use GCC as Clang was failing in this environment
+            env = os.environ.copy()
+            env["CC"] = "gcc"
+            env["CXX"] = "g++"
+            subprocess.run(cmd, check=True, cwd=self.cpp_dir, env=env)
             
             if not os.path.exists(gguf_path):
                 raise FileNotFoundError(f"GGUF file not created: {gguf_path}")
@@ -232,9 +256,12 @@ class BitNetManager:
             # Build command
             inference_script = os.path.join(self.cpp_dir, "run_inference.py")
             
+            # Ensure model path is absolute
+            abs_model_path = os.path.abspath(model_path)
+
             cmd = [
                 "python", inference_script,
-                "-m", model_path,
+                "-m", abs_model_path,
                 "-p", prompt,
                 "-n", str(n_predict),
                 "-temp", str(temperature),
