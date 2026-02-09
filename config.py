@@ -5,21 +5,45 @@ Configuration file for fine-tuning Phi-3-mini to create Aurora model
 # Model Configuration(Default)
 BASE_MODEL_NAME = "unsloth/Phi-3-mini-4k-instruct"
 OUTPUT_MODEL_NAME = "aurora"
-MAX_SEQ_LENGTH = 2048
+MAX_SEQ_LENGTH = 8192
+
+# BitNet Model Support
+BITNET_AVAILABLE_MODELS = {
+    'bitnet-2b': 'microsoft/bitnet-b1.58-2B-4T',
+    'bitnet-3b': '1bitLLM/bitnet_b1_58-3B',
+    'bitnet-large': '1bitLLM/bitnet_b1_58-large',
+    'llama3-1bit': 'HF1BitLLM/Llama3-8B-1.58-100B-tokens',
+    'falcon3-1bit-1b': 'tiiuae/Falcon3-1B-Instruct-1.58bit',
+    'falcon3-1bit-3b': 'tiiuae/Falcon3-3B-Instruct-1.58bit',
+    'falcon3-1bit-7b': 'tiiuae/Falcon3-7B-Instruct-1.58bit',
+    'falcon3-1bit-10b': 'tiiuae/Falcon3-10B-Instruct-1.58bit',
+}
+
+# BitNet-specific settings (applied automatically when BitNet model is detected)
+BITNET_CONFIG = {
+    'use_4bit': False,  # BitNet already uses 1.58-bit
+    'lora_r': 8,  # Smaller rank for 1-bit models
+    'lora_alpha': 16,
+    'max_seq_length': 2048,
+    'batch_size': 4,
+    'gradient_accumulation_steps': 2,
+    'learning_rate': 5e-5,
+    'num_epochs': 5,
+}
 
 # Data Configuration
 BOOKS_FOLDER = "books"
 TRAIN_TEST_SPLIT = 0.9  # 90% train, 10% validation
 
 # LoRA Configuration
-LORA_R = 16
-LORA_ALPHA = 16
+LORA_R = 32
+LORA_ALPHA = 64
 LORA_DROPOUT = 0.05
 TARGET_MODULES = ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj']
 
 # Training Configuration
-BATCH_SIZE = 2
-GRADIENT_ACCUMULATION_STEPS = 4
+BATCH_SIZE = 1
+GRADIENT_ACCUMULATION_STEPS = 64
 LEARNING_RATE = 2e-4
 NUM_EPOCHS = 3
 WARMUP_STEPS = 5

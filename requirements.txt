@@ -1,4 +1,4 @@
-unsloth>=0.1.0
+
 torch>=2.1.0
 transformers>=4.36.0
 datasets>=2.14.0
@@ -6,5 +6,43 @@ trl>=0.7.4
 peft>=0.7.0
 accelerate>=0.25.0
 bitsandbytes>=0.41.0
+
+
+
+# Unsloth for efficient fine-tuning
+unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git
+# or use unsloth>=0.1.0 
+
+# For model conversion and deployment
 sentencepiece>=0.1.99
 protobuf>=3.20.0
+
+# HuggingFace Hub for model downloads
+huggingface-hub>=0.19.0
+
+# Logging and utilities
+tqdm>=4.65.0
+wandb>=0.15.0  # Optional: for experiment tracking
+
+# BitNet-specific dependencies (optional, for 1-bit LLM support)
+# Install these if you plan to use BitNet models
+
+# Note: bitnet.cpp is cloned as a git repository, not installed via pip
+# The following are Python dependencies used by bitnet.cpp:
+numpy>=1.24.0
+scipy>=1.10.0
+
+# For BitNet inference
+# These will be used when running bitnet.cpp scripts
+safetensors>=0.4.0
+
+# Development dependencies (optional)
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Notes:
+# 1. For BitNet support, run: python test_bitnet.py --setup-only
+# 2. BitNet requires CMake 3.22+ and Clang 18+ (install separately)
+# 3. On Ubuntu/Debian: bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+# 4. On Windows: Install Visual Studio 2022 with C++ development tools

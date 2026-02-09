@@ -29,6 +29,51 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+def is_bitnet_model(model_name):
+    """
+    Detect if a model is a BitNet model based on its name.
+    
+    Args:
+        model_name: Model name or path
+        
+    Returns:
+        bool: True if model is BitNet
+    """
+    bitnet_indicators = [
+        'bitnet', 
+        '1.58', 
+        '1-bit', 
+        'ternary',
+        'b1_58',
+        '1bit'
+    ]
+    model_lower = model_name.lower()
+    return any(indicator in model_lower for indicator in bitnet_indicators)
+
+def get_bitnet_config(model_name):
+    """
+    Get BitNet-specific configuration.
+    
+    Args:
+        model_name: BitNet model name
+        
+    Returns:
+        dict: BitNet configuration
+    """
+    logger.info("🔹 Detected BitNet model - applying BitNet-specific configuration")
+    
+    # Import BITNET_CONFIG from config
+    from config import BITNET_CONFIG
+    
+    logger.info("BitNet Configuration:")
+    logger.info(f"  - LoRA rank: {BITNET_CONFIG['lora_r']}")
+    logger.info(f"  - Max sequence length: {BITNET_CONFIG['max_seq_length']}")
+    logger.info(f"  - Batch size: {BITNET_CONFIG['batch_size']}")
+    logger.info(f"  - Learning rate: {BITNET_CONFIG['learning_rate']}")
+    logger.info(f"  - Epochs: {BITNET_CONFIG['num_epochs']}")
+    
+    return BITNET_CONFIG
+
 def get_ollama_models():
     """
     Get the list of locally downloaded Ollama models.
@@ -70,6 +115,18 @@ def map_ollama_to_unsloth(ollama_model):
         "gemma:7b": "unsloth/gemma-7b-bnb-4bit",
         "gemma:2b": "unsloth/gemma-2b-bnb-4bit",
         "llama2": "unsloth/llama-2-7b-bnb-4bit",
+        "deepseek":"deepseek-ai/deepseek-coder-33b-instruct",
+        "kimi": "moonshot-ai/kimi-1.5-chat",
+        "bitnet": "microsoft/bitnet-b1.58-2B-4T",
+        "bitnet:2b": "microsoft/bitnet-b1.58-2B-4T",
+        "bitnet:3b": "1bitLLM/bitnet_b1_58-3B",
+        "bitnet:large": "1bitLLM/bitnet_b1_58-large",
+        "llama3-1bit": "HF1BitLLM/Llama3-8B-1.58-100B-tokens",
+        "llama3:1bit": "HF1BitLLM/Llama3-8B-1.58-100B-tokens",
+        "falcon3-1bit:1b": "tiiuae/Falcon3-1B-Instruct-1.58bit",
+        "falcon3-1bit:3b": "tiiuae/Falcon3-3B-Instruct-1.58bit",
+        "falcon3-1bit:7b": "tiiuae/Falcon3-7B-Instruct-1.58bit",
+        "falcon3-1bit:10b": "tiiuae/Falcon3-10B-Instruct-1.58bit"
     } 
     # More models at https://huggingface.co/unsloth
 
@@ -105,6 +162,8 @@ def update_config_file(updates: dict):
                 if line.startswith(f'{key} ='):
                     if isinstance(value, str):
                         f.write(f'{key} = "{value}"\n')
+                    elif isinstance(value, list):
+                        f.write(f'{key} = {value}\n')
                     else:
                         f.write(f'{key} = {value}\n')
                     updated_count += 1
@@ -137,9 +196,13 @@ def detect_target_modules(model):
     logger.info(f"Detected target modules: {result}")
     return result
 
-def apply_lora(model):
+def apply_lora(model, is_bitnet=False):
     """
     Apply LoRA configuration to the model.
+
+     Args:
+        model: The model to apply LoRA to
+        is_bitnet: Whether this is a BitNet model (uses different settings)
     """
     logger.info("\n" + "="*60)
     logger.info("APPLYING LoRA CONFIGURATION")
@@ -148,6 +211,9 @@ def apply_lora(model):
     logger.info(f"LoRA alpha: {LORA_ALPHA}")
     logger.info(f"LoRA dropout: {LORA_DROPOUT}")
     logger.info(f"Target modules: {TARGET_MODULES}")
+    
+    if is_bitnet:
+        logger.info("Using BitNet-optimized LoRA settings")
     
     model = FastLanguageModel.get_peft_model(
         model,
@@ -172,9 +238,12 @@ def apply_lora(model):
 
     return model
 
-def load_model():
+def load_model(is_bitnet=False):
     """
     Load the base model and apply LoRA configuration.
+
+    Args:
+        is_bitnet: Whether this is a BitNet model
 
     Returns:
         model: The prepared model for fine-tuning
@@ -184,8 +253,14 @@ def load_model():
     logger.info("LOADING BASE MODEL")
     logger.info("="*60)
     logger.info(f"Base model: {BASE_MODEL_NAME}")
+    logger.info(f"Model type: {'BitNet (1-bit)' if is_bitnet else 'Standard'}")
     logger.info(f"Max sequence length: {MAX_SEQ_LENGTH}")
     logger.info(f"Using 4-bit quantization: {USE_4BIT}")
+
+    if is_bitnet:
+        logger.info("\n🔹 BitNet Model Detected!")
+        logger.info("Note: BitNet models use 1.58-bit ternary weights (-1, 0, +1)")
+        logger.info("Fine-tuning will use LoRA adapters on top of 1-bit weights")
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=BASE_MODEL_NAME,
@@ -196,18 +271,27 @@ def load_model():
 
     logger.info("Base model loaded successfully!")
 
-    model = apply_lora(model)
+    model = apply_lora(model, is_bitnet=is_bitnet)
     
     return model, tokenizer
 
-def train_aurora(model=None, tokenizer=None):
+def train_aurora(model=None, tokenizer=None, is_bitnet=False):
     """
     Main training function.
+    
+    Args:
+        model: Pre-loaded model (optional)
+        tokenizer: Pre-loaded tokenizer (optional)
+        is_bitnet: Whether this is a BitNet model
     """
     logger.info("\n" + "="*60)
     logger.info("AURORA FINE-TUNING STARTED")
     logger.info("="*60)
     logger.info(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    if is_bitnet:
+        logger.info("Training BitNet 1-bit LLM")
+        logger.info("For inference after training, use bitnet.cpp for optimal performance")
     
     # Create output directories
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -215,10 +299,10 @@ def train_aurora(model=None, tokenizer=None):
     
     # Load model if not provided
     if model is None or tokenizer is None:
-        model, tokenizer = load_model()
+        model, tokenizer = load_model(is_bitnet=is_bitnet)
     else:
         # Apply LoRA if base model was provided
-        model = apply_lora(model)
+        model = apply_lora(model, is_bitnet=is_bitnet)
     
     # Prepare dataset
     logger.info("\n" + "="*60)
@@ -226,6 +310,18 @@ def train_aurora(model=None, tokenizer=None):
     logger.info("="*60)
     train_dataset, val_dataset = data_preparation.prepare_dataset(tokenizer)
     
+    if is_bitnet:
+        logger.info("\n" + "="*60)
+        logger.info("BITNET POST-TRAINING NOTES")
+        logger.info("="*60)
+        logger.info("For optimal BitNet inference:")
+        logger.info("1. Use bitnet.cpp instead of standard inference")
+        logger.info("2. Inference will be 2-6x faster on CPU vs standard quantization")
+        logger.info("\nBitNet advantages:")
+        logger.info("  • 16x smaller model size")
+        logger.info("  • 55-82% energy savings")
+        logger.info("  • No GPU required for inference")
+
     # Training arguments
     logger.info("\n" + "="*60)
     logger.info("TRAINING CONFIGURATION")
@@ -325,6 +421,7 @@ if __name__ == "__main__":
 
         selected_model_obj = None
         selected_tokenizer_obj = None
+        is_bitnet = False
 
         if ollama_models:
             print("\n" + "="*60)
@@ -351,24 +448,35 @@ if __name__ == "__main__":
                         if not unsloth_model:
                             unsloth_model = selected_ollama_model
 
+                    # Check if this is a BitNet model
+                    is_bitnet = is_bitnet_model(unsloth_model)
+
+                    if is_bitnet:
+                       logger.info("🔹 BitNet model detected - applying BitNet configuration")
+                       bitnet_config = get_bitnet_config(unsloth_model)
+
                     # 3. Prompt for Max Sequence Length
-                    max_seq_input = input(f"Enter Max Sequence Length (default {MAX_SEQ_LENGTH}): ").strip()
+                    default_seq_length = 2048 if is_bitnet else MAX_SEQ_LENGTH                 
+                    max_seq_input = input(f"Enter Max Sequence Length (default {default_seq_length}): ").strip()
                     if max_seq_input:
                         try:
                             max_seq_length = int(max_seq_input)
                         except ValueError:
-                            logger.warning(f"Invalid input for sequence length, using default {MAX_SEQ_LENGTH}")
-                            max_seq_length = MAX_SEQ_LENGTH
+                            logger.warning(f"Invalid input for sequence length, using default {default_seq_length}")
+                            max_seq_length = default_seq_length
                     else:
-                        max_seq_length = MAX_SEQ_LENGTH
+                        max_seq_length = default_seq_length
 
                     # 4. Load model temporarily to detect architecture
                     logger.info(f"Loading {unsloth_model} to confirm architecture...")
+                    
+                    use_4bit_load = USE_4BIT if not is_bitnet else False
+
                     selected_model_obj, selected_tokenizer_obj = FastLanguageModel.from_pretrained(
                         model_name=unsloth_model,
                         max_seq_length=max_seq_length,
                         dtype=None,
-                        load_in_4bit=USE_4BIT,
+                        load_in_4bit=use_4bit_load,
                     )
 
                     # Detect target modules
@@ -380,6 +488,24 @@ if __name__ == "__main__":
                         "MAX_SEQ_LENGTH": max_seq_length,
                         "TARGET_MODULES": detected_modules
                     }
+
+                    if is_bitnet:
+                        logger.info("\n🔹 Applying BitNet-specific settings to config")
+                        config_updates.update({
+                            "USE_4BIT": False,
+                            "LORA_R": bitnet_config['lora_r'],
+                            "LORA_ALPHA": bitnet_config['lora_alpha'],
+                            "BATCH_SIZE": bitnet_config['batch_size'],
+                            "GRADIENT_ACCUMULATION_STEPS": bitnet_config['gradient_accumulation_steps'],
+                            "LEARNING_RATE": bitnet_config['learning_rate'],
+                            "NUM_EPOCHS": bitnet_config['num_epochs'],
+                        })
+                        logger.info("BitNet config applied:")
+                        logger.info(f"  - USE_4BIT: {config_updates['USE_4BIT']}")
+                        logger.info(f"  - LORA_R: {config_updates['LORA_R']}")
+                        logger.info(f"  - BATCH_SIZE: {config_updates['BATCH_SIZE']}")
+                        logger.info(f"  - LEARNING_RATE: {config_updates['LEARNING_RATE']}")
+
 
                     if update_config_file(config_updates):
                         logger.info("Updated config.py with new model parameters")
@@ -403,9 +529,19 @@ if __name__ == "__main__":
                 logger.info("Invalid choice, keeping current model configuration")
         else:
             logger.info("No Ollama models found or Ollama not running, using default configuration")
+            is_bitnet = is_bitnet_model(BASE_MODEL_NAME)
 
         # Start training
-        train_aurora(model=selected_model_obj, tokenizer=selected_tokenizer_obj)
+        train_aurora(model=selected_model_obj, tokenizer=selected_tokenizer_obj, is_bitnet=is_bitnet)
     except Exception as e:
         logger.error(f"Training failed with error: {str(e)}", exc_info=True)
         raise
+    """
+    Recommended Training Strategy
+
+1. Base model selection: DeepSeek-Coder for code-heavy tasks, Kimi for context-heavy analysis
+2. Dataset mix: 60% robotics/physics, 20% code examples (PicoGK/Blender), 20% materials/biology
+3. Training duration: 3-5 epochs (more can cause overfitting on small datasets)
+4. Validation: Test on held-out RobotCEM design tasks
+5. Iteration: Analyze failures, add corrective examples, retrain
+    """
