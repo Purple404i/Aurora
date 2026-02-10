@@ -1,132 +1,48 @@
-# Aurora Fine-Tuning Project
+# Aurora: Advanced Technical Assistant
 
-Fine-tune Phi-3-mini model on custom book data to create Aurora.
+Aurora is a specialized AI assistant designed for robotics engineering, physics, and biological sciences. This repository provides a complete framework for fine-tuning state-of-the-art LLMs on custom data and deploying them efficiently.
 
-## Prerequisites
+## 🌟 Key Features
 
-1. **Python 3.10+** installed
-2. **CUDA-capable GPU** (recommended: 16GB+ VRAM)
-3. **Ollama** installed (for final deployment)
+- **Dual Workflow Support**: Fine-tune high-quality standard models (GPU) or run ultra-efficient BitNet 1-bit models (CPU).
+- **Interactive Fine-Tuning**: Automatically maps local Ollama models to Unsloth for efficient LoRA training.
+- **CPU Optimized**: Integrated with `bitnet.cpp` for 2-6x faster inference on standard hardware.
+- **Flexible Deployment**: Direct export to Ollama or GGUF format.
 
-## Setup
+---
 
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+## 🚀 Quick Start
 
-### 2. Prepare Your Data
+### 1. Installation
+Follow the [Installation Guide](INSTALLATION.md) to set up your environment.
 
-Place all your training text files (.txt) in the `books/` folder:
-```
-books/
-├── book1.txt
-├── book2.txt
-└── book3.txt
-```
+### 2. Choose Your Path
 
-## Training Process
+| I want to... | Hardware | Guide |
+| :--- | :--- | :--- |
+| **Fine-tune Llama 3 / Phi-3** | NVIDIA GPU (16GB+ VRAM) | [Usage Guide (Standard)](USAGE_GUIDE.md#2-standard-model-workflow-gpu) |
+| **Run 1-bit LLMs on CPU** | Modern CPU (ARM/x86) | [Usage Guide (BitNet)](USAGE_GUIDE.md#3-bitnet-model-workflow-cpu) |
 
-### Step 1: Train the Model
-```bash
-python train.py
-```
+---
 
-This will initiate an interactive process where you can:
-- **Select a Model**: Choose from models already downloaded locally via Ollama.
-- **Configure Context**: Specify the maximum sequence length (e.g., 2048, 4096) for training.
-- **Automatic Optimization**: The script automatically detects the model's architecture and selects the correct target modules for LoRA fine-tuning.
-- **Dynamic Formatting**: Training data is automatically formatted using the selected model's native chat template.
+## 🛠 Project Structure
 
-Training time: 2-6 hours (depending on data size and GPU)
+- `train.py`: Main interactive training script.
+- `bitnet_utils.py`: Utilities for managing BitNet models and inference.
+- `config.py`: Central configuration for all workflows.
+- `data_preparation.py`: Advanced data loading and chat template formatting.
+- `books/`: Directory for your custom training data (.txt files).
 
-### Step 2: Convert to GGUF (for Ollama)
-```bash
-python convert_to_gguf.py
-```
+---
 
-This converts the model to GGUF format compatible with Ollama.
+## ❓ Troubleshooting & Support
 
-### Step 3: Import to Ollama
-```bash
-python import_to_ollama.py
-```
+- **Common build issues**: See [BITNET_ISSUES.md](BITNET_ISSUES.md) for solutions to compiler and header problems.
+- **Memory/Quality**: Refer to the troubleshooting sections in the [Usage Guide](USAGE_GUIDE.md#5-troubleshooting).
 
-This creates the Aurora model in Ollama.
+## 📄 License
 
-### Step 4: Test Aurora
-```bash
-python test_aurora.py
-```
-
-Or use Ollama directly:
-```bash
-ollama run aurora
-```
-
-## Configuration
-
-While `train.py` handles model selection and architecture detection automatically, you can still edit `config.py` to customize:
-- **Training Hyperparameters**: epochs, batch size, learning rate, etc.
-- **LoRA Settings**: rank (r), alpha, and dropout.
-- **System Prompt**: The core identity and instructions for Aurora (preserved even when switching base models).
-- **Data Paths**: The folder containing your training books.
-
-## Project Structure
-```
-aurora/
-├── books/                      # Your training data (*.txt files)
-├── config.py                   # Configuration settings
-├── data_preparation.py         # Data loading and preprocessing
-├── train.py                    # Main training script
-├── convert_to_gguf.py         # Convert to GGUF format
-├── import_to_ollama.py        # Import to Ollama
-├── test_aurora.py             # Test the model
-├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-│
-├── aurora_output/             # Fine-tuned model (created during training)
-├── aurora_output_merged/      # Merged model (created during training)
-├── aurora_checkpoints/        # Training checkpoints
-├── aurora_gguf/              # GGUF format model
-├── logs/                     # Training logs
-├── data_samples/             # Sample training data
-└── llama.cpp/                # llama.cpp for conversion (auto-downloaded)
-```
-
-## Monitoring Training
-
-Training logs are saved to `logs/` folder. Monitor progress:
-```bash
-tail -f logs/training_*.log
-```
-
-## Troubleshooting
-
-### Out of Memory Error
-- Reduce `BATCH_SIZE` in `config.py`
-- Increase `GRADIENT_ACCUMULATION_STEPS`
-- Reduce `MAX_SEQ_LENGTH`
-
-### Slow Training
-- Ensure GPU is being used (check with `nvidia-smi`)
-- Reduce dataset size for faster iterations
-- Use smaller `LORA_R` value
-
-### Model Quality Issues
-- Increase `NUM_EPOCHS`
-- Add more training data
-- Adjust `LEARNING_RATE`
-
-## Notes
-
-- The original `phi3:mini` model in Ollama remains unchanged
-- Aurora is created as a separate model
-- You can run both models side by side
-- Training progress is logged to both console and log files
-
-## Support
-
-For issues or questions, check:
-- Unsloth documentation: https://github.com/unslothai/unsloth
-- Ollama documentation: https://ollama.ai/
+This project incorporates:
+- [BitNet](https://github.com/microsoft/BitNet) (MIT License)
+- [llama.cpp](https://github.com/ggerganov/llama.cpp) (MIT License)
+- [Unsloth](https://github.com/unslothai/unsloth) (Apache 2.0)
