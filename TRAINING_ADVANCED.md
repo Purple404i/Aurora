@@ -11,6 +11,9 @@ The system fetches data from:
 - **Mathematics**: Theoretical proofs, advanced calculus, and problem-solving.
 - **Circuit Designing**: Electronic schematics, circuit theory, and hardware description languages (Verilog).
 - **Mechanics**: Statics, dynamics, fluid mechanics, and materials science.
+- **Biology**: Practical and knowledge on biological constraints and processes.
+- **Physics**: Theoretical and practical understanding.
+- **Chemistry**: Theoretical proofs, and advanced analysis of chemical problems.
 - **Computational Engineering**: The full LEAP71 suite and RobotCEM implementation.
 
 ## 2. High-Quality Dataset Resources
@@ -32,6 +35,15 @@ We have selected the following datasets on Hugging Face for their technical dept
 ### Computational Design
 - **LEAP71 Repos**: (PicoGK, ShapeKernel, LatticeLibrary) The definitive source for voxel-based computational engineering.
 - **RobotCEM**: The framework that integrates Aurora with PicoGK and Blender for the Design-Simulate-Fix loop. [github.com/Purple404i/RobotCEM](https://github.com/Purple404i/RobotCEM)
+
+### Physics
+- **Camel-AI Physics**: Multi-turn technical conversations on classical and quantum mechanics. [huggingface.co/datasets/camel-ai/physics](https://huggingface.co/datasets/camel-ai/physics)
+
+### Chemsitry
+- **Camel-AI Chemistry**: Multi-turn analysis on chemistry. [huggingface.co/datasets/camel-ai/chemistry](https://huggingface.co/datasets/camel-ai/chemistry)
+
+### Biology
+- **Camel-AI Biology**: Multi-turn analysis of biological processes and features. [huggingface.co/datasets/camel-ai/physics](https://huggingface.co/datasets/camel-ai/biology)
 
 ## 3. Running the Training
 
