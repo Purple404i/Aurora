@@ -26,7 +26,7 @@ python train.py
 ```
 1. **Select a Model**: Choose from your local Ollama models.
 2. **Set Context**: Enter the maximum sequence length (e.g., 2048).
-3. **Automated Data Acquisition**: By default, the system will fetch specialized datasets (Science/Coding/LEAP71) as defined in `config.py`. See [TRAINING_ADVANCED.md](TRAINING_ADVANCED.md) for details.
+3. **Automated Data Acquisition**: By default, the system will fetch specialized datasets (Math, Circuits, Mechanics, Science, and LEAP71) as defined in `config.py`. See [TRAINING_ADVANCED.md](TRAINING_ADVANCED.md) for details.
 4. **Wait**: Training typically takes 2-6 hours on a modern GPU.
 
 ### Step 2: Convert to GGUF

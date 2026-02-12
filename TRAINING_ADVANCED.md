@@ -7,33 +7,51 @@ This guide explains how to train Aurora on specialized technical domains: Mathem
 Aurora's data preparation pipeline automatically fetches and formats high-quality technical data. The sources are configured in `config.py`.
 
 ### Domain Coverage
-The system fetches data from:
-- **Mathematics**: Theoretical proofs, advanced calculus, and problem-solving.
-- **Circuit Designing**: Electronic schematics, circuit theory, and hardware description languages (Verilog).
-- **Mechanics**: Statics, dynamics, fluid mechanics, and materials science.
-- **Computational Engineering**: The full LEAP71 suite and RobotCEM implementation.
+- **Mathematics**: Advanced reasoning, proofs, and symbolic manipulation.
+- **Circuit Designing**: EDA (Electronic Design Automation), PCB layout theory, and Hardware Description Languages (Verilog/SystemVerilog).
+- **Advanced Mechanics**: Finite Element Analysis (FEA) theory, Computational Fluid Dynamics (CFD), and Kinematic modeling.
+- **Computational Engineering**: The full LEAP71 suite (Voxel-based geometry) and RobotCEM integration.
 
-## 2. High-Quality Dataset Resources
+## 2. Technical Domain Deep-Dive
 
-We have selected the following datasets on Hugging Face for their technical depth:
+### Mathematics & Symbolic Reasoning
+Aurora is trained on datasets like **Camel-AI Math** and **MATH-500** to move beyond simple arithmetic. It learns to solve:
+- **Differential Equations**: For modeling physical systems.
+- **Linear Algebra**: For kinematic transformations and rotation matrices.
+- **Optimization**: For finding optimal robot paths and lattice structures.
 
-### Mathematics
-- **Camel-AI Math**: 50,000 examples of complex mathematical reasoning and problem-solving. [huggingface.co/datasets/camel-ai/math](https://huggingface.co/datasets/camel-ai/math)
-- **MATH-500**: High-level competition math problems with step-by-step solutions.
+### Circuit Designing & Hardware (Verilog)
+By integrating the **MG-Verilog** and **Electronics StackExchange** datasets, Aurora can:
+- **Generate RTL Code**: Write synthesizable Verilog for custom hardware accelerators.
+- **Design Schematics**: Suggest components and connection logic for robot control boards (ESP32, STM32).
+- **Debug Hardware**: Analyze circuit failure modes and suggest fixes based on engineering best practices.
 
-### Circuit Designing & Electronics
-- **Electronics StackExchange**: Real-world engineering questions and verified solutions for circuit design. [huggingface.co/datasets/gbertola/electronics-stackexchange](https://huggingface.co/datasets/gbertola/electronics-stackexchange)
-- **Hardware Code**: Extracted from repositories (Verilog/VHDL) to teach Aurora hardware-level logic.
+### Advanced Mechanics & Materials Science
+Using the **MIT MechanicsMaterials** dataset, Aurora gains insights into:
+- **Stress-Strain Analysis**: Predicting where a 3D-printed part might fail.
+- **Material Selection**: Choosing between PLA, ABS, Carbon Fiber, or Biopolymers based on environmental and mechanical constraints.
+- **Kinematics**: Designing 6-DOF arms with accurate Jacobian calculations.
 
-### Advanced Mechanics & Materials
-- **MechanicsMaterials**: MIT-curated dataset for mechanical and manufacturing engineering. [huggingface.co/datasets/lamm-mit/MechanicsMaterials](https://huggingface.co/datasets/lamm-mit/MechanicsMaterials)
-- **Camel-AI Physics**: Multi-turn technical conversations on classical and quantum mechanics. [huggingface.co/datasets/camel-ai/physics](https://huggingface.co/datasets/camel-ai/physics)
+## 3. High-Quality Dataset Resources
+
+We have selected the following datasets for their technical depth:
+
+### Mathematics & Science
+- **Camel-AI Math**: 50,000 examples of complex mathematical reasoning. [huggingface.co/datasets/camel-ai/math](https://huggingface.co/datasets/camel-ai/math)
+- **MATH-500**: High-level competition math problems with solutions. [huggingface.co/datasets/HuggingFaceH4/MATH-500](https://huggingface.co/datasets/HuggingFaceH4/MATH-500)
+- **SciQ**: 13,000+ science exam questions. [huggingface.co/datasets/sciq](https://huggingface.co/datasets/sciq)
+- **Camel-AI Physics/Biology/Chemistry**: Multi-turn technical conversations.
+
+### Circuits & Mechanics
+- **MG-Verilog**: Multi-grained dataset for hardware design. [huggingface.co/datasets/GaTech-EIC/MG-Verilog](https://huggingface.co/datasets/GaTech-EIC/MG-Verilog)
+- **Electronics StackExchange**: Real-world engineering Q&A. [huggingface.co/datasets/gbertola/electronics-stackexchange](https://huggingface.co/datasets/gbertola/electronics-stackexchange)
+- **MIT MechanicsMaterials**: Mechanical engineering dataset. [huggingface.co/datasets/lamm-mit/MechanicsMaterials](https://huggingface.co/datasets/lamm-mit/MechanicsMaterials)
 
 ### Computational Design
-- **LEAP71 Repos**: (PicoGK, ShapeKernel, LatticeLibrary) The definitive source for voxel-based computational engineering.
-- **RobotCEM**: The framework that integrates Aurora with PicoGK and Blender for the Design-Simulate-Fix loop. [github.com/Purple404i/RobotCEM](https://github.com/Purple404i/RobotCEM)
+- **LEAP71 Repos**: The definitive source for PicoGK voxel-based engineering.
+- **RobotCEM**: Aurora's primary integration framework. [github.com/Purple404i/RobotCEM](https://github.com/Purple404i/RobotCEM)
 
-## 3. Running the Training
+## 4. Running the Training
 
 1.  **Installation**:
     ```bash
@@ -48,7 +66,7 @@ We have selected the following datasets on Hugging Face for their technical dept
 3.  **Inspect Training Material**:
     You can look into the `books/` folder after the acquisition phase to see the raw text that will be used for training.
 
-## 4. Fine-Tuning Strategy for Engineering
+## 5. Fine-Tuning Strategy for Engineering
 
 To maximize Aurora's capabilities in these domains:
 
@@ -56,7 +74,7 @@ To maximize Aurora's capabilities in these domains:
 - **System Prompt Integrity**: Always use the provided `SYSTEM_PROMPT`. It contains the "Reasoning Protocol" that forces the model to calculate relevant physics and math before suggesting a design.
 - **Hardware Requirements**: For advanced training with large datasets and 8k context window, an NVIDIA GPU with 24GB+ VRAM (e.g., RTX 3090/4090) is recommended.
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 - **Dataset Load Failures**: If a Hugging Face dataset fails to load, ensure you have a stable internet connection and have accepted any required terms on the dataset's page.
 - **Git Errors**: If cloning fails, verify that `git` is installed and you have access to the public LEAP71/RobotCEM repositories.

@@ -21,7 +21,7 @@ Follow the [Installation Guide](INSTALLATION.md) to set up your environment.
 | I want to... | Hardware | Guide |
 | :--- | :--- | :--- |
 | **Fine-tune Llama 3 / Phi-3** | NVIDIA GPU (16GB+ VRAM) | [Usage Guide (Standard)](USAGE_GUIDE.md#2-standard-model-workflow-gpu) |
-| **Advanced Training (Science/Code)** | NVIDIA GPU (24GB+ VRAM) | [Advanced Training Guide](TRAINING_ADVANCED.md) |
+| **Math, Circuits, & Mechanics** | NVIDIA GPU (24GB+ VRAM) | [Advanced Training Guide](TRAINING_ADVANCED.md) |
 | **Run 1-bit LLMs on CPU** | Modern CPU (ARM/x86) | [Usage Guide (BitNet)](USAGE_GUIDE.md#3-bitnet-model-workflow-cpu) |
 
 ---

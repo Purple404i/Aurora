@@ -51,8 +51,11 @@ HF_DATASETS = [
     {"repo": "camel-ai/biology", "name": "biology"},
     {"repo": "camel-ai/chemistry", "name": "chemistry"},
     {"repo": "camel-ai/math", "name": "math"},
+    {"repo": "TIGER-Lab/MathInstruct", "name": "math_instruct"},
+    {"repo": "HuggingFaceH4/MATH-500", "name": "advanced_math"},
     {"repo": "lamm-mit/MechanicsMaterials", "name": "mechanics"},
     {"repo": "gbertola/electronics-stackexchange", "name": "electronics"},
+    {"repo": "GaTech-EIC/MG-Verilog", "name": "verilog_hardware"},
     {"repo": "theblackcat102/evol-codealpaca-v1", "name": "coding"},
 ]
 
