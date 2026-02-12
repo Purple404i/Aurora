@@ -10,6 +10,7 @@ MAX_SEQ_LENGTH = 8192
 # BitNet Model Support
 BITNET_AVAILABLE_MODELS = {
     'bitnet-2b': 'microsoft/BitNet-b1.58-2B-4T',
+    'bitnet-b1.58-2B-4T': 'microsoft/bitnet-b1.58-2B-4T',
     'bitnet-3b': '1bitLLM/bitnet_b1_58-3B',
     'bitnet-large': '1bitLLM/bitnet_b1_58-large',
     'llama3-1bit': 'HF1BitLLM/Llama3-8B-1.58-100B-tokens',

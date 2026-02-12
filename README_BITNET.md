@@ -295,7 +295,7 @@ tail -f logs/training_*.log
 #### Model Download Failed
 - Check internet connection
 - Verify HuggingFace access
-- Try manual download: `huggingface-cli download <model-name>`
+- Try manual download: `hf download <model-name>`
 
 ## BitNet Resources
 

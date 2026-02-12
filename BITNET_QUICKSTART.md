@@ -147,13 +147,13 @@ python run_inference.py \
 
 ## Available BitNet Models
 
-| Model Name | Size | Parameters | Best For |
-|------------|------|------------|----------|
-| bitnet-b1.58-2B-4T | ~2GB | 2B | General use, fastest |
-| bitnet-b1.58-3B | ~3GB | 3B | Better quality |
-| bitnet-b1.58-large | ~7GB | 7B | High quality |
-| llama3-8B-1.58bit | ~8GB | 8B | Llama3-based |
-| falcon3-7B-1.58bit | ~7GB | 7B | Falcon3-based |
+|     Model Name     | Size | Parameters | Best For |
+|--------------------|------|------------|----------|
+| bitnet-b1.58-2B-4T | ~2GB | 2B         | General use, fastest |
+| bitnet-b1.58-3B    | ~3GB | 3B         | Better quality |
+| bitnet-b1.58-large | ~7GB | 7B         | High quality |
+| llama3-8B-1.58bit  | ~8GB | 8B         | Llama3-based |
+| falcon3-7B-1.58bit | ~7GB | 7B         | Falcon3-based |
 
 Download any model:
 ```python
