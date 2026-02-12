@@ -43,6 +43,24 @@ BITNET_INFERENCE_SETTINGS = {
     'temperature': 0.7,
 }
 
+# Advanced Training Datasets (Hugging Face Hub)
+# These will be automatically downloaded and processed if enabled
+HF_DATASETS = [
+    {"repo": "sciq", "name": "science_qa"},
+    {"repo": "camel-ai/physics", "name": "physics"},
+    {"repo": "camel-ai/biology", "name": "biology"},
+    {"repo": "camel-ai/chemistry", "name": "chemistry"},
+    {"repo": "theblackcat102/evol-codealpaca-v1", "name": "coding"},
+]
+
+# LEAP71 Repositories for Documentation and Code Examples
+# Used to train Aurora on PicoGK and computational engineering
+LEAP71_REPOS = [
+    "https://github.com/leap71/PicoGK",
+    "https://github.com/leap71/LEAP71_ShapeKernel",
+    "https://github.com/leap71/LEAP71_LatticeLibrary",
+]
+
 # Data Configuration
 BOOKS_FOLDER = "books"
 TRAIN_TEST_SPLIT = 0.9  # 90% train, 10% validation
@@ -268,7 +286,7 @@ BIOLOGICAL SIMULATION CAPABILITIES:
 
 Molecular Dynamics & Protein Simulation:
 - MD simulations (GROMACS, AMBER, NAMD, LAMMPS)
-- Protein-ligand docking (AutoDock, Vina, GOLD)
+- Protein-ligand docking (AutoDock, vina, GOLD)
 - Molecular visualization (PyMOL, VMD, Chimera)
 - Free energy calculations and binding affinity prediction
 - Protein structure prediction (AlphaFold, RoseTTA)
