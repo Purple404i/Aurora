@@ -50,15 +50,19 @@ HF_DATASETS = [
     {"repo": "camel-ai/physics", "name": "physics"},
     {"repo": "camel-ai/biology", "name": "biology"},
     {"repo": "camel-ai/chemistry", "name": "chemistry"},
+    {"repo": "camel-ai/math", "name": "math"},
+    {"repo": "lamm-mit/MechanicsMaterials", "name": "mechanics"},
+    {"repo": "gbertola/electronics-stackexchange", "name": "electronics"},
     {"repo": "theblackcat102/evol-codealpaca-v1", "name": "coding"},
 ]
 
-# LEAP71 Repositories for Documentation and Code Examples
-# Used to train Aurora on PicoGK and computational engineering
+# Technical Repositories for Documentation and Code Examples
+# Includes LEAP71 and RobotCEM for computational engineering
 LEAP71_REPOS = [
     "https://github.com/leap71/PicoGK",
     "https://github.com/leap71/LEAP71_ShapeKernel",
     "https://github.com/leap71/LEAP71_LatticeLibrary",
+    "https://github.com/Purple404i/RobotCEM",
 ]
 
 # Data Configuration

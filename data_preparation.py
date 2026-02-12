@@ -74,12 +74,15 @@ def fetch_leap71_data(repos_list: List[str], output_folder: str):
             subprocess.run(["git", "clone", "--depth", "1", repo_url, repo_path],
                            check=True, capture_output=True)
 
-            # Extract .md and .cs (C# for PicoGK) and .py files
+            # Extract documentation and technical code files
             extracted_text = f"--- REPOSITORY: {repo_name} ---\n"
             file_count = 0
+            # Extensions for documentation, C# (PicoGK), Python, C++, and Hardware Design (Verilog)
+            valid_extensions = ('.md', '.cs', '.py', '.v', '.sv', '.cpp', '.h', '.txt')
+
             for root, _, files in os.walk(repo_path):
                 for file in files:
-                    if file.endswith(('.md', '.cs', '.py')):
+                    if file.endswith(valid_extensions):
                         file_path = os.path.join(root, file)
                         try:
                             with open(file_path, 'r', encoding='utf-8') as f:
