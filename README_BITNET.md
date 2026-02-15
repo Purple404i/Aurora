@@ -242,14 +242,14 @@ On Intel i7-13700H (x86):
 
 ### When to Use BitNet
 
-✅ **Use BitNet when:**
+**Use BitNet when:**
 - Running on CPU-only systems
 - Deploying on edge devices
 - Need ultra-low memory usage
 - Energy efficiency is critical
 - Want to run large models locally
 
-❌ **Use standard models when:**
+**Use standard models when:**
 - Have powerful GPU available
 - Need absolute best quality
 - Fine-tuning is primary goal (BitNet is mainly for inference)
