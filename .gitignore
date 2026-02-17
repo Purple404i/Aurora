@@ -19,11 +19,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-sample_data.txt
-my_data.txt
+books/
 # Virtual Environment
 venv/
-dw_env/
+au_env/
 env/
 ENV/
 .env
@@ -90,3 +89,4 @@ aurora/
 ├── logs/                          # [AUTO-CREATED] Training logs
 ├── data_samples/                  # [AUTO-CREATED] Sample data
 └── llama.cpp/                     # [AUTO-CREATED] Conversion tool
+bitnet_models/bitnet-b1.58-2B-4T/merges.txt
