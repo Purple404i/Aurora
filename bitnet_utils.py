@@ -192,6 +192,14 @@ class BitNetManager:
             # Check if we already have the binary to avoid rebuilding
             binary_path = os.path.join(self.cpp_dir, "build", "bin", "llama-cli")
 
+            # If build directory exists but binary doesn't, it might be a failed build
+            # with the wrong compiler. Clear it to force fresh detection with GCC.
+            build_dir = os.path.join(self.cpp_dir, "build")
+            if os.path.exists(build_dir) and not os.path.exists(binary_path):
+                logger.info("Clearing failed build directory to force fresh compiler detection...")
+                import shutil
+                shutil.rmtree(build_dir)
+
             cmd = [
                 "python", setup_script,
                 "-md", model_dir,

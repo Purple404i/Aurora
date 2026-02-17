@@ -140,13 +140,13 @@ BitNet b1.58 2B4T was evaluated against leading open-weight full-precision LLMs 
 The model weights and code are released under the [MIT License](https://huggingface.co/microsoft/bitnet-b1.58-2B-4T/blob/main/LICENSE).
 
 ## Bias, Risks, and Limitations
-Predictions may perpetuate biases present in the training data. 
+Predictions may perpetuate biases present in the training data.
 
-There is limited support for non-English languages and underrepresented  domains. 
+There is limited support for non-English languages and underrepresented  domains.
 
-There is a risk of generating inaccurate or harmful content. 
+There is a risk of generating inaccurate or harmful content.
 
-The Bitnet model has an elevated defect rate when responding to election-critical queries, which may result in incorrect or unauthoritative election critical information being presented. We are working to improve the model's performance in this area. Users should verify information related to elections with the election authority in their region. 
+The Bitnet model has an elevated defect rate when responding to election-critical queries, which may result in incorrect or unauthoritative election critical information being presented. We are working to improve the model's performance in this area. Users should verify information related to elections with the election authority in their region.
 
 ## Disclaimer
 We do not recommend using BitNet b1.58 in commercial or real-world applications without further testing and development. This model is intended for research and development purposes. While efforts have been made to align it using SFT and DPO, it may still produce outputs that are unexpected, biased, or inaccurate. Please use responsibly.
