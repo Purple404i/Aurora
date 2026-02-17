@@ -8,15 +8,6 @@ This guide provides deep technical details on how to train Aurora to become an e
 **Primary Script**: `data_preparation.py`
 
 Aurora's intelligence comes from high-quality data. The acquisition process is automated to ensure consistency.
-### Domain Coverage
-The system fetches data from:
-- **Mathematics**: Theoretical proofs, advanced calculus, and problem-solving.
-- **Circuit Designing**: Electronic schematics, circuit theory, and hardware description languages (Verilog).
-- **Mechanics**: Statics, dynamics, fluid mechanics, and materials science.
-- **Biology**: Practical and knowledge on biological constraints and processes.
-- **Physics**: Theoretical and practical understanding.
-- **Chemistry**: Theoretical proofs, and advanced analysis of chemical problems.
-- **Computational Engineering**: The full LEAP71 suite and RobotCEM implementation.
 
 ### Data Sources
 1.  **Hugging Face Hub**: Fetches structured Q&A and technical datasets.
