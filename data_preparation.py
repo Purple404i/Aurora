@@ -42,6 +42,10 @@ def fetch_hf_datasets(datasets_list: List[Dict], output_folder: str):
                     text_content += f"Output: {example['output']}\n\n"
                 elif 'question' in example and 'answer' in example:
                     text_content += f"Question: {example['question']}\nAnswer: {example['answer']}\n\n"
+                elif 'problem' in example and 'solution' in example:
+                    text_content += f"Problem: {example['problem']}\nSolution: {example['solution']}\n\n"
+                elif 'description' in example and 'code' in example:
+                    text_content += f"Description: {example['description']}\nCode:\n{example['code']}\n\n"
                 elif 'instruction' in example and 'response' in example:
                     text_content += f"Instruction: {example['instruction']}\nResponse: {example['response']}\n\n"
 
