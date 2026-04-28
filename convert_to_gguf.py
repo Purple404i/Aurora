@@ -30,21 +30,35 @@ def convert_to_gguf():
     os.makedirs(gguf_output_dir, exist_ok=True)
     
     # Clone llama.cpp if not exists
-    llama_cpp_dir = "./llama.cpp"
+    llama_cpp_dir = os.path.abspath("./llama.cpp")
     if not os.path.exists(llama_cpp_dir):
         logger.info("Cloning llama.cpp repository...")
         subprocess.run([
-            "git", "clone", "https://github.com/ggerganov/llama.cpp.git"
+            "git", "clone", "--depth", "1", "https://github.com/ggerganov/llama.cpp.git", llama_cpp_dir
         ], check=True)
         
         logger.info("Building llama.cpp...")
-        subprocess.run(["make"], cwd=llama_cpp_dir, check=True)
+        try:
+            # Try building with make
+            subprocess.run(["make", "-j"], cwd=llama_cpp_dir, check=True)
+        except Exception as e:
+            logger.warning(f"Build with make failed: {e}. Trying with CMake...")
+            build_dir = os.path.join(llama_cpp_dir, "build")
+            os.makedirs(build_dir, exist_ok=True)
+            subprocess.run(["cmake", ".."], cwd=build_dir, check=True)
+            subprocess.run(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir, check=True)
+
+    # Install requirements for conversion
+    logger.info("Installing conversion requirements...")
+    subprocess.run([
+        "pip", "install", "-r", os.path.join(llama_cpp_dir, "requirements.txt")
+    ], check=True)
     
     # Convert to GGUF
     logger.info(f"\nConverting {merged_model_dir} to GGUF...")
     
     convert_script = os.path.join(llama_cpp_dir, "convert_hf_to_gguf.py")
-    output_file = os.path.join(gguf_output_dir, f"{OUTPUT_MODEL_NAME}.gguf")
+    output_file = os.path.abspath(os.path.join(gguf_output_dir, f"{OUTPUT_MODEL_NAME}.gguf"))
     
     subprocess.run([
         "python", convert_script,
