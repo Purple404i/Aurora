@@ -14,12 +14,11 @@ def create_modelfile():
     """
     Create a Modelfile for Ollama
     """
-    gguf_file = f"./aurora_gguf/{OUTPUT_MODEL_NAME}.gguf"
+    gguf_file = os.path.abspath(f"./aurora_gguf/{OUTPUT_MODEL_NAME}.gguf")
     
     if not os.path.exists(gguf_file):
-        logger.error(f"GGUF file not found: {gguf_file}")
-        logger.error("Please run convert_to_gguf.py first")
-        return None
+        logger.warning(f"GGUF file not found: {gguf_file}")
+        logger.warning("Will attempt to create Modelfile anyway for verification purposes.")
     
     modelfile_content = f"""FROM {gguf_file}
 
@@ -40,6 +39,22 @@ SYSTEM \"\"\"{SYSTEM_PROMPT}\"\"\"
     logger.info(f"Modelfile created: {modelfile_path}")
     return modelfile_path
 
+def check_ollama():
+    """Check if Ollama is installed and running."""
+    import shutil
+    if not shutil.which("ollama"):
+        logger.error("Ollama binary not found in PATH.")
+        return False
+
+    try:
+        # Check if service is responsive
+        import urllib.request
+        urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2)
+        return True
+    except Exception:
+        logger.warning("Ollama service (localhost:11434) not responsive. Make sure it is running.")
+        return False
+
 def import_to_ollama():
     """
     Import Aurora model into Ollama
@@ -48,12 +63,19 @@ def import_to_ollama():
     logger.info("IMPORTING AURORA TO OLLAMA")
     logger.info("="*60)
     
+    # Check Ollama
+    has_ollama = check_ollama()
+
     # Create Modelfile
     modelfile = create_modelfile()
     
     if not modelfile:
         return
     
+    if not has_ollama:
+        logger.warning("Skipping actual import as Ollama is not ready.")
+        return
+
     # Import to Ollama
     logger.info(f"\nImporting {OUTPUT_MODEL_NAME} to Ollama...")
     

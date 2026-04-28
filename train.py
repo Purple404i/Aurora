@@ -182,18 +182,34 @@ def detect_target_modules(model):
     """
     logger.info("Detecting target modules for model architecture...")
     
-    # Common projection layers to target
-    target_candidates = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "qkv_proj", "dense"]
+    # Common projection layers to target across various architectures (Llama, Phi, Falcon, Mistral, etc.)
+    target_candidates = [
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj",
+        "qkv_proj", "dense", "query_key_value",
+        "dense_h_to_4h", "dense_4h_to_h",
+        "fc1", "fc2", "proj", "linear"
+    ]
 
     detected_modules = set()
     for name, module in model.named_modules():
-        if "Linear" in str(type(module)):
+        # Check for various linear layer types including BitNet's custom layers if applicable
+        module_type = str(type(module)).lower()
+        if "linear" in module_type or "bitlinear" in module_type:
             parts = name.split(".")
             if parts:
                 leaf = parts[-1]
                 if leaf in target_candidates:
                     detected_modules.add(leaf)
     
+    # Fallback: if no candidates found but we have linear layers, use the most common ones
+    if not detected_modules:
+        for name, module in model.named_modules():
+             if "linear" in str(type(module)).lower():
+                 parts = name.split(".")
+                 if parts:
+                     detected_modules.add(parts[-1])
+
     # Sort for consistency
     result = sorted(list(detected_modules))
     logger.info(f"Detected target modules: {result}")
@@ -210,19 +226,26 @@ def apply_lora(model, is_bitnet=False):
     logger.info("\n" + "="*60)
     logger.info("APPLYING LoRA CONFIGURATION")
     logger.info("="*60)
-    logger.info(f"LoRA r: {LORA_R}")
-    logger.info(f"LoRA alpha: {LORA_ALPHA}")
+
+    lora_r = LORA_R
+    lora_alpha = LORA_ALPHA
+    
+    if is_bitnet:
+        logger.info("Using BitNet-optimized LoRA settings from config")
+        from config import BITNET_CONFIG
+        lora_r = BITNET_CONFIG.get('lora_r', LORA_R)
+        lora_alpha = BITNET_CONFIG.get('lora_alpha', LORA_ALPHA)
+
+    logger.info(f"LoRA r: {lora_r}")
+    logger.info(f"LoRA alpha: {lora_alpha}")
     logger.info(f"LoRA dropout: {LORA_DROPOUT}")
     logger.info(f"Target modules: {TARGET_MODULES}")
     
-    if is_bitnet:
-        logger.info("Using BitNet-optimized LoRA settings")
-    
     model = FastLanguageModel.get_peft_model(
         model,
-        r=LORA_R,
+        r=lora_r,
         target_modules=TARGET_MODULES,
-        lora_alpha=LORA_ALPHA,
+        lora_alpha=lora_alpha,
         lora_dropout=LORA_DROPOUT,
         bias="none",
         use_gradient_checkpointing=USE_GRADIENT_CHECKPOINTING,

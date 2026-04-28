@@ -68,15 +68,40 @@ class BitNetManager:
             else:
                 logger.info("bitnet.cpp repository already exists")
             
+            # 1. Programmatically handle header redefinitions (SPM Headers)
+            spm_headers = os.path.join(self.cpp_dir, "3rdparty", "llama.cpp", "spm-headers")
+            if os.path.exists(spm_headers):
+                logger.info(f"Renaming conflicting SPM headers: {spm_headers}")
+                bak_path = spm_headers + ".bak"
+                if os.path.exists(bak_path):
+                    import shutil
+                    shutil.rmtree(bak_path)
+                os.rename(spm_headers, bak_path)
+
+            # 2. Manually copy required kernel headers based on architecture
+            import platform
+            arch = platform.machine()
+            if "x86_64" in arch or "AMD64" in arch:
+                kernel_src = os.path.join(self.cpp_dir, "preset_kernels", "bitnet_b1_58-large", "bitnet-lut-kernels-tl2.h")
+                kernel_dst = os.path.join(self.cpp_dir, "include", "bitnet-lut-kernels.h")
+                ini_src = os.path.join(self.cpp_dir, "preset_kernels", "bitnet_b1_58-large", "kernel_config_tl2.ini")
+                ini_dst = os.path.join(self.cpp_dir, "include", "kernel_config.ini")
+
+                if os.path.exists(kernel_src):
+                    logger.info(f"Copying x86_64 kernels to include directory...")
+                    import shutil
+                    shutil.copyfile(kernel_src, kernel_dst)
+                    if os.path.exists(ini_src):
+                        shutil.copyfile(ini_src, ini_dst)
+
             # Check for required dependencies
             self._check_dependencies()
             
             if self.check_binaries():
                 logger.info("✓ bitnet.cpp is already built")
             else:
-                logger.info("! bitnet.cpp is cloned but binaries are not built yet.")
-                logger.info("  Binaries will be built automatically during the first model setup.")
-                logger.info("  If Clang fails, try building manually with: CC=gcc CXX=g++ cmake .. && make")
+                logger.info("! bitnet.cpp is cloned but binaries are not built yet. Attempting build with GCC...")
+                self._build_bitnet_cpp()
 
             logger.info("✓ bitnet.cpp setup complete")
             return True
@@ -87,6 +112,36 @@ class BitNetManager:
         except Exception as e:
             logger.error(f"Unexpected error during setup: {str(e)}")
             return False
+
+    def _build_bitnet_cpp(self):
+        """Build bitnet.cpp using GCC to avoid Clang segfaults."""
+        try:
+            logger.info("Building bitnet.cpp with GCC/G++...")
+            build_dir = os.path.join(self.cpp_dir, "build")
+            os.makedirs(build_dir, exist_ok=True)
+
+            # Environment with GCC/G++ forced
+            env = os.environ.copy()
+            env["CC"] = "gcc"
+            env["CXX"] = "g++"
+
+            # Run CMake
+            subprocess.run([
+                "cmake", "..",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ], cwd=build_dir, env=env, check=True)
+
+            # Run Make
+            import multiprocessing
+            n_cores = multiprocessing.cpu_count()
+            subprocess.run([
+                "make", f"-j{n_cores}"
+            ], cwd=build_dir, env=env, check=True)
+
+            logger.info("✓ Build successful")
+        except Exception as e:
+            logger.error(f"Build failed: {str(e)}")
+            raise
     
     def _check_dependencies(self):
         """Check if required dependencies are installed."""
@@ -176,6 +231,7 @@ class BitNetManager:
             Path to GGUF model file
         """
         try:
+            model_dir = os.path.abspath(model_dir)
             logger.info(f"Setting up model for inference: {model_dir}")
             
             # Check if GGUF file already exists
@@ -323,6 +379,7 @@ class BitNetManager:
             Benchmark results dictionary
         """
         try:
+            model_path = os.path.abspath(model_path)
             logger.info(f"Benchmarking model: {model_path}")
             
             benchmark_script = os.path.join(self.cpp_dir, "utils", "e2e_benchmark.py")

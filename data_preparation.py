@@ -180,7 +180,8 @@ def fetch_hf_datasets(datasets_list: List[Dict], output_folder: str):
 
 def fetch_leap71_data(repos_list: List[str], output_folder: str):
     """
-    Clone LEAP71 repositories and extract documentation and code examples.
+    Clone LEAP71 and RobotCEM repositories and extract documentation and code examples.
+    Specifically optimized for PicoGK (C#) and Blender (Python) engineering patterns.
     """
     os.makedirs(output_folder, exist_ok=True)
     temp_dir = "temp_repos"
@@ -190,7 +191,8 @@ def fetch_leap71_data(repos_list: List[str], output_folder: str):
 
     for repo_url in repos_list:
         repo_name = repo_url.split("/")[-1]
-        print(f"Fetching LEAP71 repo: {repo_name}...")
+        is_robotcem = "RobotCEM" in repo_name
+        print(f"Fetching repo: {repo_name}...")
         repo_path = os.path.join(temp_dir, repo_name)
 
         try:
@@ -201,10 +203,17 @@ def fetch_leap71_data(repos_list: List[str], output_folder: str):
             )
 
             extracted_text = f"--- REPOSITORY: {repo_name} ---\n"
+            if is_robotcem:
+                extracted_text += "Context: RobotCEM is an AI-powered computational engineering system using PicoGK and Blender.\n"
+
             file_count = 0
             valid_extensions = (".md", ".cs", ".py", ".v", ".sv", ".cpp", ".h", ".txt")
 
             for root, _, files in os.walk(repo_path):
+                # Skip common build/node/etc directories
+                if any(skip in root for skip in [".git", "bin", "obj", "node_modules", "dist"]):
+                    continue
+
                 for file in files:
                     if file.endswith(valid_extensions):
                         file_path = os.path.join(root, file)
@@ -212,14 +221,20 @@ def fetch_leap71_data(repos_list: List[str], output_folder: str):
                             with open(file_path, "r", encoding="utf-8") as f:
                                 content = f.read().strip()
                                 if content:
-                                    extracted_text += f"\n\n--- Source File: {file} ---\n\n"
+                                    ext = os.path.splitext(file)[1][1:]
+                                    lang = "csharp" if ext == "cs" else ("python" if ext == "py" else ext)
+
+                                    extracted_text += f"\n\n--- Source File: {file} ---\n"
+                                    extracted_text += f"``` {lang}\n"
                                     extracted_text += content
+                                    extracted_text += "\n```\n"
                                     file_count += 1
                         except Exception:
                             continue
 
             if file_count > 0:
-                output_file = os.path.join(output_folder, f"leap71_{repo_name}.txt")
+                prefix = "robotcem_" if is_robotcem else "leap71_"
+                output_file = os.path.join(output_folder, f"{prefix}{repo_name}.txt")
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(extracted_text)
                 print(f"  Extracted {file_count} files to {output_file}")
@@ -259,17 +274,54 @@ def read_books(folder_path: str) -> List[Dict]:
 
 
 def chunk_text(text: str, chunk_size: int = 1500, overlap: int = 300) -> List[str]:
-    """Split text into overlapping chunks."""
+    """
+    Split text into overlapping chunks, attempting to preserve code block integrity.
+    """
     chunks = []
     start = 0
     text_length = len(text)
 
     while start < text_length:
-        end = start + chunk_size
+        end = min(start + chunk_size, text_length)
+
+        # If we are not at the end, try to avoid splitting in the middle of a code block or line
+        if end < text_length:
+            # Look for code block markers
+            last_code_fence = text.rfind("```", start, end)
+
+            # If the last fence is an opening one, adjust end to include the whole block if possible
+            # or split before the fence.
+            count_fences = text.count("```", start, end)
+            if count_fences % 2 != 0:
+                # We are inside a code block. Try to find the closing fence shortly after 'end'
+                next_fence = text.find("```", end, end + overlap + 500)
+                if next_fence != -1:
+                    end = next_fence + 3
+                else:
+                    # Can't find closing fence soon, split before the opening fence
+                    if last_code_fence > start:
+                        end = last_code_fence
+            else:
+                # We are likely outside or just finished a block.
+                # Try to split at a double newline for cleaner boundaries
+                last_double_newline = text.rfind("\n\n", start + chunk_size // 2, end)
+                if last_double_newline != -1:
+                    end = last_double_newline + 2
+                else:
+                    # Try a single newline
+                    last_newline = text.rfind("\n", start + chunk_size // 2, end)
+                    if last_newline != -1:
+                        end = last_newline + 1
+
         chunk = text[start:end]
         if chunk.strip():
             chunks.append(chunk.strip())
-        start += chunk_size - overlap
+
+        # Update start for next iteration
+        if end >= text_length:
+            break
+
+        start = max(start + 1, end - overlap)
 
     return chunks
 
